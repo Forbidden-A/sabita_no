@@ -1,18 +1,30 @@
 [package]
 name = "sabita_no"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Forbidden-A"]
 edition = "2018"
 license = "MIT"
+default-run = "sabita_no"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dependencies.clap]
+version = "3.0.0-beta.4"
+optional = true
+default-features = true
+features = ["suggestions", "color", "wrap_help", "unicode_help"]
+
 
 [lib]
 name = "sabita_no_lib"
 path = "src/lib.rs"
 
-[[bin]]
-name = "sabita_no_bin"
-path = "src/bin/bin.rs"
+[features]
+application = ["clap"]
 
-[dependencies]
+[[bin]]
+name = "sabita_no"
+path = "src/bin/main.rs"
+required-features = ["application"]

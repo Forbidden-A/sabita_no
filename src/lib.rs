@@ -11,7 +11,7 @@ enum Command {
     Close(usize),
 }
 
-const MEM_SIZE: usize = 30_000;
+const MEM_SIZE: usize = 3_0_0_0_0;
 
 pub fn run(source: &str, input: &str) -> Result<String, String> {
     let commands = parse(source);
