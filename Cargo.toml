@@ -1,0 +1,18 @@
+[package]
+name = "sabita_no"
+version = "0.1.0"
+authors = ["Forbidden-A"]
+edition = "2018"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "sabita_no_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sabita_no_bin"
+path = "src/bin/bin.rs"
+
+[dependencies]
