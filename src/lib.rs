@@ -11,7 +11,7 @@ enum Command {
     Close(usize),
 }
 
-const MEM_SIZE: usize = 3_0_0_0_0;
+const MEM_SIZE: usize = 30_000;
 
 pub fn run(source: &str, input: &str) -> Result<String, String> {
     let commands = parse(source);
@@ -24,52 +24,64 @@ pub fn run(source: &str, input: &str) -> Result<String, String> {
 
     let mut input_chars = input.chars();
     let mut memory = [0u8; MEM_SIZE];
-    let mut command_counter: usize = 0;
-    let mut memory_counter: usize = 0;
+    let mut command_index: usize = 0;
+    let mut memory_pointer: usize = 0;
     let mut out = String::from("");
 
-    while let Some(command) = commands.get(command_counter) {
+    while let Some(command) = commands.get(command_index) {
         match *command {
             Command::MoveRight => {
-                if memory_counter + 1 == MEM_SIZE {
-                    memory_counter = 0;
+                if memory_pointer + 1 == MEM_SIZE {
+                    memory_pointer = 0;
                 } else {
-                    memory_counter += 1;
+                    memory_pointer += 1;
                 }
             }
             Command::MoveLeft => {
-                if memory_counter == 0 {
-                    memory_counter = MEM_SIZE - 1;
+                if memory_pointer == 0 {
+                    memory_pointer = MEM_SIZE - 1;
                 } else {
-                    memory_counter -= 1;
+                    memory_pointer -= 1;
                 }
             }
-            Command::Increment => memory[memory_counter] += 1,
-            Command::Decrement => memory[memory_counter] -= 1,
-            Command::Input => memory[memory_counter] = input_chars.next().unwrap_or('\0') as u8,
+            Command::Increment => memory[memory_pointer] += 1,
+            Command::Decrement => memory[memory_pointer] -= 1,
+            Command::Input => memory[memory_pointer] = input_chars.next().unwrap_or('\0') as u8,
             Command::Output => {
-                let c = char::from_u32(memory[memory_counter] as u32);
+                let c = char::from_u32(memory[memory_pointer] as u32);
                 if c.is_none() {
                     return Err(format!(
                         "Couldn't convert u32 {} to a char.",
-                        memory[memory_counter] as u32
+                        memory[memory_pointer] as u32
                     ));
                 }
                 out.push(c.unwrap());
             }
+            /*
+             * If the current cell is zero,
+             * we go to the end of the loop
+             * by setting the command_index to index
+             * which is the index of the matching bracket
+             */
             Command::Open(index) => {
-                if memory[memory_counter] == 0 {
-                    command_counter = index;
+                if memory[memory_pointer] == 0 {
+                    command_index = index;
                 }
             }
+            /*
+             * If the current cell is not zero,
+             * we go back to the beginning of the loop
+             * by setting the command_index to index
+             * which is the index of the matching bracket
+             */
             Command::Close(index) => {
-                if memory[memory_counter] != 0 {
-                    command_counter = index;
+                if memory[memory_pointer] != 0 {
+                    command_index = index;
                 }
             }
         }
 
-        command_counter += 1;
+        command_index += 1;
     }
 
     Ok(out)
@@ -108,7 +120,7 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
             }
         }
     };
-
+    // Fix soon™
     for i in 0..tokens.len() {
         commands.push(match tokens[i] {
             '>' => Command::MoveRight,
@@ -118,6 +130,7 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
             ',' => Command::Input,
             '.' => Command::Output,
             '[' => {
+                // i + 1 causes index out of bounds if the tokens are ["[",]
                 let result = find_matching_bracket('[', ']', i + 1, tokens.len());
                 if let Err(e) = result {
                     return Err(e);
@@ -125,6 +138,7 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
                 Command::Open(result.unwrap())
             }
             ']' => {
+                // i - 1 causes subtract overflow if the tokens are ["]",]
                 let result = find_matching_bracket(']', '[', i - 1, 0);
                 if let Err(e) = result {
                     return Err(e);
