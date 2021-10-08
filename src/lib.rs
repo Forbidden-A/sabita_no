@@ -16,8 +16,8 @@ const MEM_SIZE: usize = 3_0_0_0_0;
 pub fn run(source: &str, input: &str) -> Result<String, String> {
     let commands = parse(source);
 
-    if commands.is_err() {
-        return Err(commands.unwrap_err());
+    if let Err(e) = commands {
+        return Err(e);
     }
 
     let commands = commands.unwrap();
@@ -78,10 +78,7 @@ pub fn run(source: &str, input: &str) -> Result<String, String> {
 fn parse(source: &str) -> Result<Vec<Command>, String> {
     let tokens: Vec<char> = source
         .chars()
-        .filter(|char| match *char {
-            '>' | '<' | '.' | ',' | '[' | ']' | '+' | '-' => true,
-            _ => false,
-        })
+        .filter(|char| matches!(*char, '>' | '<' | '.' | ',' | '[' | ']' | '+' | '-'))
         .collect();
 
     let mut commands: Vec<Command> = vec![];
@@ -122,15 +119,15 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
             '.' => Command::Output,
             '[' => {
                 let result = find_matching_bracket('[', ']', i + 1, tokens.len());
-                if result.is_err() {
-                    return Err(result.unwrap_err());
+                if let Err(e) = result {
+                    return Err(e);
                 }
                 Command::Open(result.unwrap())
             }
             ']' => {
                 let result = find_matching_bracket(']', '[', i - 1, 0);
-                if result.is_err() {
-                    return Err(result.unwrap_err());
+                if let Err(e) = result {
+                    return Err(e);
                 }
                 Command::Close(result.unwrap())
             }
@@ -138,7 +135,7 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
         })
     }
 
-    return Ok(commands);
+    Ok(commands)
 }
 
 #[cfg(test)]
