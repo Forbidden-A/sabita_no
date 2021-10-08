@@ -1,4 +1,6 @@
-# Installation
+# Sabita nō
+
+## Installation
 
 You need to have rust installed.
 
