@@ -99,7 +99,6 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
         // Not the best way but it works
         let mut i = start_index;
         let mut open_loops = 1;
-
         loop {
             if tokens[i] == open {
                 open_loops += 1;
@@ -111,16 +110,21 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
                 return Ok(i);
             }
 
-            if i == stop_index {
-                return Err(format!("Unmatched brackets at index {}", i));
-            } else if start_index < stop_index {
+            if i == stop_index || (stop_index >= start_index && i + 1 == tokens.len()) {
+                return Err(format!(
+                    "Unmatched bracket at or near index {}",
+                    start_index
+                ));
+            }
+
+            if start_index < stop_index {
                 i += 1;
             } else {
                 i -= 1;
             }
         }
     };
-    // Fix soon™
+
     for i in 0..tokens.len() {
         commands.push(match tokens[i] {
             '>' => Command::MoveRight,
@@ -130,7 +134,9 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
             ',' => Command::Input,
             '.' => Command::Output,
             '[' => {
-                // i + 1 causes index out of bounds if the tokens are ["[",]
+                if i == tokens.len() || i + 1 == tokens.len() {
+                    return Err(format!("Unmatched bracket at or near index {}", i));
+                }
                 let result = find_matching_bracket('[', ']', i + 1, tokens.len());
                 if let Err(e) = result {
                     return Err(e);
@@ -138,7 +144,9 @@ fn parse(source: &str) -> Result<Vec<Command>, String> {
                 Command::Open(result.unwrap())
             }
             ']' => {
-                // i - 1 causes subtract overflow if the tokens are ["]",]
+                if i == 0 {
+                    return Err(String::from("Unmatched bracket at or near index 0"));
+                }
                 let result = find_matching_bracket(']', '[', i - 1, 0);
                 if let Err(e) = result {
                     return Err(e);
@@ -173,5 +181,33 @@ mod tests {
     fn echo() {
         const INPUT: &str = "Hello, I am working correctly."; // Example input
         assert_eq!(run(r#",[.,]"#, INPUT), Ok(String::from(INPUT)))
+    }
+
+    #[test]
+    fn unmatched_opening_bracket_at_index_zero() {
+        assert_eq!(
+            run(r#"["#, ""),
+            Err(String::from("Unmatched bracket at or near index 0"))
+        )
+    }
+
+    #[test]
+    fn unmatched_closing_bracket_at_index_zero() {
+        assert_eq!(
+            run(r#"]"#, ""),
+            Err(String::from("Unmatched bracket at or near index 0"))
+        )
+    }
+
+    #[test]
+    fn unmatched_opening_bracket() {
+        let r = run(r#",.["#, "a");
+        assert!(r.is_err())
+    }
+
+    #[test]
+    fn unmatched_closing_bracket() {
+        let r = run(r#",.]"#, "a");
+        assert!(r.is_err())
     }
 }
